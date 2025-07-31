@@ -26,7 +26,7 @@ public class ContactsServiceImpl implements ContactsService {
 
     private final String contactsFilePath;
 
-    public ContactsServiceImpl(@Value("contacts.path:NO_PATH") String contactsFilePath) {
+    public ContactsServiceImpl(@Value("${contacts.path:NO_PATH}") String contactsFilePath) {
         this.contactsFilePath = contactsFilePath;
     }
 
