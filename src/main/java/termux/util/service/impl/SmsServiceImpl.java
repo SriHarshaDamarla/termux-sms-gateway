@@ -2,9 +2,15 @@ package termux.util.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import termux.util.dto.RequestDto;
+import termux.util.dto.ResponseDto;
 import termux.util.service.SmsService;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 @Service
@@ -22,7 +28,15 @@ public class SmsServiceImpl implements SmsService {
             };
 
             Process process = Runtime.getRuntime().exec(cmd);
-            int exitCode = process.waitFor();
+            try (BufferedInputStream inputStream = new BufferedInputStream(process.getErrorStream());) {
+                String s = new String(inputStream.readAllBytes());
+                log.info("SMS Error Stream: {}", s);
+                int exitCode = process.waitFor();
+                log.info("SMS command executed with exit code: {}", exitCode);
+                if (!s.isEmpty()) {
+                    return "ERROR: " + s.trim();
+                }
+            }
         } catch (IOException e) {
             log.error("Failed to send SMS", e);
             return "ERROR: " + e.getMessage();
@@ -32,5 +46,44 @@ public class SmsServiceImpl implements SmsService {
         }
 
         return "SUCCESS";
+    }
+
+    @Override
+    public List<ResponseDto> sendSms(RequestDto req) {
+        List<String> smsParts = partitionSmsMessages(req.getMessage());
+        return smsParts.stream()
+                .map(part -> {
+                    ResponseDto response = new ResponseDto();
+                    String responseMessage = sendSms(
+                            req.getPhoneNumber(), part, req.getSlotId()
+                    );
+                    if (responseMessage.startsWith("ERROR")) {
+                        response.setStatus("FAILURE");
+                        response.setMessage(responseMessage);
+                        return response;
+                    } else {
+                        response.setStatus("SUCCESS");
+                        response.setMessage("SMS sent successfully");
+                        return response;
+                    }
+                })
+                .toList();
+    }
+
+    private List<String> partitionSmsMessages(String message) {
+        int maxLength = 160;
+        if (message.length() <= maxLength) {
+            return List.of(message);
+        }
+
+        List<String> parts = new ArrayList<>();
+        int start = 0;
+
+        while (start < message.length()) {
+            int end = Math.min(start + maxLength, message.length());
+            parts.add(message.substring(start, end));
+            start = end;
+        }
+        return parts;
     }
 }
