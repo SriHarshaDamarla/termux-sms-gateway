@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "termux.util"
-version = "0.0.1-SNAPSHOT"
+version = "internal-v1"
 
 java {
 	toolchain {
