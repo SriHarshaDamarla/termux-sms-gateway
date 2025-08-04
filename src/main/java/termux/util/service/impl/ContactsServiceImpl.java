@@ -80,7 +80,7 @@ public class ContactsServiceImpl implements ContactsService {
     contact.setName(name);
 
     return contacts.stream()
-        .filter(cnt -> name.equals(cnt.getName()))
+        .filter(cnt -> name.equalsIgnoreCase(cnt.getName()))
         .findFirst().orElse(contact);
   }
 
@@ -91,7 +91,12 @@ public class ContactsServiceImpl implements ContactsService {
 
   @Override
   public List<Contact> searchContacts(String query) {
-    return List.of();
+    if (null == contacts) {
+      refreshContacts();
+    }
+    return contacts.stream()
+            .filter(cnt -> cnt.getName().toUpperCase().contains(query.toUpperCase()))
+            .toList();
   }
 
   private Set<Contact> loadContactsFromTermux() {
@@ -117,7 +122,10 @@ public class ContactsServiceImpl implements ContactsService {
       return termuxContacts.stream().map(tm -> {
         Contact contact = new Contact();
         contact.setName(tm.getName());
-        contact.setPhoneNumbers(List.of(tm.getNumber()));
+        contact.setPhoneNumbers(List.of(
+                tm.getNumber().replace("-","")
+                        .replace(" ","")
+        ));
         return contact;
       }).collect(Collectors.toCollection(
               () -> new TreeSet<>(Comparator.comparing(Contact::getName))

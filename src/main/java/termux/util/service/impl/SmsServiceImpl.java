@@ -29,11 +29,11 @@ public class SmsServiceImpl implements SmsService {
 
       Process process = Runtime.getRuntime().exec(cmd);
       try (BufferedInputStream inputStream = new BufferedInputStream(process.getErrorStream())) {
-        String s = new String(inputStream.readAllBytes());
-        log.info("SMS Error Stream: {}", s);
         int exitCode = process.waitFor();
         log.info("SMS command executed with exit code: {}", exitCode);
-        if (!s.isEmpty()) {
+        String s = new String(inputStream.readAllBytes());
+        if(!s.isEmpty()) {
+          log.info("SMS Error Stream: {}", s);
           return "ERROR: " + s.trim();
         }
       }

@@ -3,13 +3,11 @@ package termux.util.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import termux.util.bean.Contact;
 import termux.util.service.ContactsService;
 
+import java.util.List;
 import java.util.Set;
 
 @RestController
@@ -28,7 +26,12 @@ public class ContactsController {
         return ResponseEntity.ok(contactsService.getContactByName(name));
     }
 
-    @GetMapping(value = "/refresh", produces = MediaType.TEXT_PLAIN_VALUE)
+    @GetMapping("/search")
+    public ResponseEntity<List<Contact>> queryContactsByName(@RequestParam String name) {
+        return ResponseEntity.ok(contactsService.searchContacts(name));
+    }
+
+    @PostMapping(value = "/refresh", produces = MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity<String> refreshContacts() {
         contactsService.refreshContacts();
         return ResponseEntity.ok("Contacts Refreshed!");
