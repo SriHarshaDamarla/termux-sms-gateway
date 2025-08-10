@@ -42,11 +42,13 @@ public class ContactsServiceImpl implements ContactsService {
         ? card.getFormattedName().getValue() : "(no name)";
     contact.setName(fullName);
 
-    List<Telephone> telNums = card.getTelephoneNumbers();
-    List<String> numbers = new ArrayList<>();
-    telNums.forEach(telNum ->
-        numbers.add(telNum.getText())
-    );
+    List<Telephone> telephoneList = card.getTelephoneNumbers();
+    List<String> numbers = telephoneList.stream()
+            .map(Telephone::getText)
+            .map(text -> text.replace("-","")
+                    .replace(" ",""))
+            .distinct()
+            .toList();
     contact.setPhoneNumbers(numbers);
     return contact;
   }
@@ -143,16 +145,7 @@ public class ContactsServiceImpl implements ContactsService {
     try (VCardReader vCardReader = new VCardReader(file.toPath());) {
       VCard card;
       while ((card = vCardReader.readNext()) != null) {
-        Contact contact = getContact(card);
-        List<Telephone> telephoneList = card.getTelephoneNumbers();
-        List<String> numbers = telephoneList.stream()
-            .map(Telephone::getText)
-            .map(text -> text.replace("-","")
-                .replace(" ",""))
-            .distinct()
-            .toList();
-        contact.setPhoneNumbers(numbers);
-        contacts.add(contact);
+        contacts.add(getContact(card));
       }
     } catch (IOException e) {
       log.error("Error reading vcf file from {}", contactsFilePath, e);
