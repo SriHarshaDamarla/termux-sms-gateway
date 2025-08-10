@@ -46,6 +46,7 @@ public class ContactsController {
         if (contact.getPhoneNumbers() == null) {
             return ResponseEntity.badRequest().body("No Contact Found!");
         }
+        index = index < 0 ? 0 : index >= contact.getPhoneNumbers().size() ? contact.getPhoneNumbers().size() - 1 : index;
         contact.setPrimaryNumber(contact.getPhoneNumbers().get(index));
         return ResponseEntity.ok("Successfully set " +
             contact.getPhoneNumbers().get(index) + " as primary for " +
